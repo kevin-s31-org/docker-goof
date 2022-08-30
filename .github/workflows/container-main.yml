@@ -1,0 +1,25 @@
+
+
+name: Snyk container workflow
+on: push
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - uses: snyk/actions/setup@master
+    - uses: actions/setup-go@v1
+      with:
+        go-version: "1.13"
+    - name: Snyk container test 
+      run: snyk container test --app-vulns --nested-jars-depth=5
+      continue-on-error: true
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      with:
+        image: node:14.18.1
+        args: --file=Dockerfile --sarif-file-output=hallo.sarif
+    - name: Upload result to GitHub Code Scanning
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: hallo.sarif
